@@ -25,7 +25,7 @@ def create_training_data(vocab_size):
 
 	print "The number of sentences: %d" % (len(sentences))
 
-	# Work tokenization
+	# Word tokenization
 	tokenized_sentences = [nltk.word_tokenize(sent) for sent in sentences]
 
 	# Compute word frequencies
@@ -38,8 +38,6 @@ def create_training_data(vocab_size):
 	index_to_word.append(unknown_token)
 	word_to_index = dict([(w,i) for i,w in enumerate(index_to_word)])
 	
-	#print word_to_index
-
 	print "Vocabulary size: %d." %vocab_size
 
 	# Replace all words not in the vocabulary with UNKNOWN_TOKEN
