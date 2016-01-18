@@ -178,8 +178,7 @@ if __name__=="__main__":
 	y_train, y_dev = y_shuffled[:-1000], y_shuffled[-1000:]
 	print("Vocabulary Size: {:d}".format(len(vocabulary)))
 	print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
-
-    loss = train_conv_net(X_train,Y_train,
+	loss = train_conv_net(X_train,Y_train,
                               U,
                               lr_decay=0.95,
                               filter_hs=[3,4,5],
@@ -191,4 +190,4 @@ if __name__=="__main__":
                               non_static=non_static,
                               batch_size=50,
                               dropout_rate=[0.5])
-    print "Loss: " + str(loss)
+	print "Loss: " + str(loss)
