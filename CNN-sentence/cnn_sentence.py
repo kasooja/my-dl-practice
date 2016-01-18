@@ -180,17 +180,7 @@ def as_floatX(variable):
         return np.cast[theano.config.floatX](variable)
     return theano.tensor.cast(variable, theano.config.floatX)
     
-def safe_update(dict_to, dict_from):
-    """
-    re-make update dictionary for safe updating
-    """
-    for key, val in dict(dict_from).iteritems():
-        if key in dict_to:
-            raise KeyError(key)
-        dict_to[key] = val
-    return dict_to
-    
-   
+#=====================================================================       
 if __name__=="__main__":
 
 	# Load data
