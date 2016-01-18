@@ -96,7 +96,6 @@ def train_conv_net(x_train, y_train
     grad_updates = sgd_updates_adadelta(params, dropout_cost, lr_decay, 1e-6, sqr_norm_lim)
     
     #assign training data
-    #extra data (at random)???                
     # theano functions to get train//test errors
     train_model = theano.function([x, y], cost, updates=grad_updates, allow_input_downcast = True)     
     
@@ -114,31 +113,13 @@ def train_conv_net(x_train, y_train
     #start training over mini-batches
     print '... training'
     epoch = 0
-    best_val_perf = 0
-    val_perf = 0
-    test_perf = 0       
-    cost_epoch = 0    
     while (epoch < n_epochs):
         start_time = time.time()
         epoch = epoch + 1
-        if shuffle_batch:
-            for minibatch_index in np.random.permutation(range(n_train_batches)):
-                cost_epoch = train_model(minibatch_index)
-                set_zero(zero_vec)
-        else:
-            for minibatch_index in xrange(n_train_batches):
-                cost_epoch = train_model(minibatch_index)  
-                set_zero(zero_vec)
-        train_losses = [test_model(i) for i in xrange(n_train_batches)]
-        train_perf = 1 - np.mean(train_losses)
-        val_losses = [val_model(i) for i in xrange(n_val_batches)]
-        val_perf = 1- np.mean(val_losses)                        
-        print('epoch: %i, training time: %.2f secs, train perf: %.2f %%, val perf: %.2f %%' % (epoch, time.time()-start_time, train_perf * 100., val_perf*100.))
-        if val_perf >= best_val_perf:
-            best_val_perf = val_perf
-            test_loss = test_model_all(test_set_x,test_set_y)        
-            test_perf = 1- test_loss         
-    return test_perf
+        train_losses = train_model(X_train,Y_train)        
+        print('epoch: %i, training time: %.2f secs, train losst: %.2f %%, %%' % (epoch, time.time()-start_time, train_losses.))
+    test_loss = test_model_all(x_dev, y_dev)        
+    return test_loss
         
 def sgd_updates_adadelta(params,cost,rho=0.95,epsilon=1e-6,norm_lim=9,word_vec_name='Words'):
     """
@@ -198,10 +179,7 @@ if __name__=="__main__":
 	print("Vocabulary Size: {:d}".format(len(vocabulary)))
 	print("Train/Dev split: {:d}/{:d}".format(len(y_train), len(y_dev)))
 
-    results = []
-    r = range(0,10)    
-    for i in r:
-        perf = train_conv_net(X_train,Y_train,
+    loss = train_conv_net(X_train,Y_train,
                               U,
                               lr_decay=0.95,
                               filter_hs=[3,4,5],
@@ -213,6 +191,4 @@ if __name__=="__main__":
                               non_static=non_static,
                               batch_size=50,
                               dropout_rate=[0.5])
-        print "cv: " + str(i) + ", perf: " + str(perf)
-        results.append(perf)  
-    print str(np.mean(results))
+    print "Loss: " + str(loss)
