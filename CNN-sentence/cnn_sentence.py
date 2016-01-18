@@ -95,44 +95,11 @@ def train_conv_net(x_train, y_train
     dropout_cost = classifier.dropout_negative_log_likelihood(y)           
     grad_updates = sgd_updates_adadelta(params, dropout_cost, lr_decay, 1e-6, sqr_norm_lim)
     
-    #shuffle dataset and assign to mini batches. if dataset size is not a multiple of mini batches, replicate 
-    #extra data (at random)
-    np.random.seed(3435)
-    if datasets[0].shape[0] % batch_size > 0:
-        extra_data_num = batch_size - datasets[0].shape[0] % batch_size
-        train_set = np.random.permutation(datasets[0])   
-        extra_data = train_set[:extra_data_num]
-        new_data=np.append(datasets[0],extra_data,axis=0)
-    else:
-        new_data = datasets[0]
-    new_data = np.random.permutation(new_data)
-    n_batches = new_data.shape[0]/batch_size
-    n_train_batches = int(np.round(n_batches*0.9))
-    #divide train set into train/val sets 
-    test_set_x = datasets[1][:,:img_h] 
-    test_set_y = np.asarray(datasets[1][:,-1],"int32")
-    train_set = new_data[:n_train_batches*batch_size,:]
-    val_set = new_data[n_train_batches*batch_size:,:]     
-    train_set_x, train_set_y = shared_dataset((train_set[:,:img_h],train_set[:,-1]))
-    val_set_x, val_set_y = shared_dataset((val_set[:,:img_h],val_set[:,-1]))
-    n_val_batches = n_batches - n_train_batches
-    val_model = theano.function([index], classifier.errors(y),
-         givens={
-            x: val_set_x[index * batch_size: (index + 1) * batch_size],
-             y: val_set_y[index * batch_size: (index + 1) * batch_size]},
-                                allow_input_downcast=True)
-            
-    #compile theano functions to get train/val/test errors
-    test_model = theano.function([index], classifier.errors(y),
-             givens={
-                x: train_set_x[index * batch_size: (index + 1) * batch_size],
-                 y: train_set_y[index * batch_size: (index + 1) * batch_size]},
-                                 allow_input_downcast=True)               
-    train_model = theano.function([index], cost, updates=grad_updates,
-          givens={
-            x: train_set_x[index*batch_size:(index+1)*batch_size],
-              y: train_set_y[index*batch_size:(index+1)*batch_size]},
-                                  allow_input_downcast = True)     
+    #assign training data
+    #extra data (at random)???                
+    # theano functions to get train//test errors
+    train_model = theano.function([x, y], cost, updates=grad_updates, allow_input_downcast = True)     
+    
     test_pred_layers = []
     test_size = test_set_x.shape[0]
     test_layer0_input = Words[T.cast(x.flatten(),dtype="int32")].reshape((test_size,1,img_h,Words.shape[1]))
@@ -172,24 +139,6 @@ def train_conv_net(x_train, y_train
             test_loss = test_model_all(test_set_x,test_set_y)        
             test_perf = 1- test_loss         
     return test_perf
-
-def shared_dataset(data_xy, borrow=True):
-        """ Function that loads the dataset into shared variables
-
-        The reason we store our dataset in shared variables is to allow
-        Theano to copy it into the GPU memory (when code is run on GPU).
-        Since copying data into the GPU is slow, copying a minibatch everytime
-        is needed (the default behaviour if the data is not in a shared
-        variable) would lead to a large decrease in performance.
-        """
-        data_x, data_y = data_xy
-        shared_x = theano.shared(np.asarray(data_x,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        shared_y = theano.shared(np.asarray(data_y,
-                                               dtype=theano.config.floatX),
-                                 borrow=borrow)
-        return shared_x, T.cast(shared_y, 'int32')
         
 def sgd_updates_adadelta(params,cost,rho=0.95,epsilon=1e-6,norm_lim=9,word_vec_name='Words'):
     """
